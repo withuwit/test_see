@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Python on WASM Example</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body>
+
+    <h2>คำนวณพื้นที่วงกลมด้วย Python (WASM)</h2>
+    <input type="text" id="radius-input" placeholder="กรอกรัศมี">
+    <button id="calc-btn">คำนวณ</button>
+    <p id="output">ผลลัพธ์จะแสดงที่นี่...</p>
+
+    <script>
+        async function main() {
+            // 1. เริ่มต้น Pyodide
+            let pyodide = await loadPyodide();
+
+            // 2. เขียนโค้ด Python เพื่อจัดการหน้าเว็บ
+            // สังเกตการใช้ 'from js import document' เพื่อคุมหน้าเว็บ
+            await pyodide.runPythonAsync(`
+                from js import document
+                import math
+
+                def calculate_area(event):
+                    try:
+                        # ดึงค่าจาก HTML input
+                        r_str = document.getElementById("radius-input").value
+                        radius = float(r_str)
+                        
+                        # คำนวณ
+                        area = math.pi * (radius ** 2)
+                        
+                        # ส่งค่ากลับไปแสดงที่ HTML tag <p>
+                        document.getElementById("output").innerText = f"พื้นที่วงกลมคือ: {area:.2f}"
+                    except Exception as e:
+                        document.getElementById("output").innerText = "Error: กรุณากรอกตัวเลข"
+
+                # ผูกฟังก์ชัน Python เข้ากับปุ่มกด HTML (ผ่าน Proxy)
+                from pyodide.ffi import create_proxy
+                click_proxy = create_proxy(calculate_area)
+                document.getElementById("calc-btn").addEventListener("click", click_proxy)
+            `);
+        }
+        main();
+    </script>
+</body>
+</html>
